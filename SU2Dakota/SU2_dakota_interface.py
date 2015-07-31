@@ -12,7 +12,8 @@
 import sys
 import re
 import os
-from SU2.io.config import Config
+sys.path.append('/Users/Santiago/Research/research_scripts/SU2Dakota/config')
+from config import Config
 
 
 
@@ -33,9 +34,12 @@ def main():
   ### Config file options ### 
   config_filename = 'inv_NACA0012_opt.cfg'
   # Create a config container
+  #config_filename = '../' + config_filename # Because running dakota with folders
   config = Config(config_filename)
   # Number of processors to run simulation on
   config.NUMBER_PART = 4
+  
+  #move mesh file to this directory
   # Optimization objective
   #config.OPT_OBJECTIVE = 'DRAG' Maybe have this in the config file itself
   # Think of these 2
@@ -91,9 +95,9 @@ def main():
   
 
   # execute the SU2 analysis
-  import SU2_driver
+  import SU2Dakota
   print "Running SU2..."
-  resultsdict = SU2_driver.SU2_run(**SU2_params)
+  resultsdict = SU2Dakota.run(**SU2_params)
   print "SU2 complete."
   print resultsdict
 
