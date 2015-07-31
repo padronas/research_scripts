@@ -12,10 +12,7 @@
 import sys
 import re
 import os
-sys.path.append('/Users/Santiago/Research/research_scripts/SU2Dakota/config')
-from config import Config
-
-
+import SU2
 
 def main():
   
@@ -35,7 +32,7 @@ def main():
   config_filename = 'inv_NACA0012_opt.cfg'
   # Create a config container
   #config_filename = '../' + config_filename # Because running dakota with folders
-  config = Config(config_filename)
+  config = SU2.io.Config(config_filename)
   # Number of processors to run simulation on
   config.NUMBER_PART = 4
   

@@ -2,7 +2,7 @@
 import os, shutil
 import json
 import numpy as np
-from bunch import Bunch
+from SU2.util.bunch import Bunch
 from record import Record
 
 import sys
