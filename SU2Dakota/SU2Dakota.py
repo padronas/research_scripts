@@ -1,6 +1,7 @@
 
 import os, shutil
 import json
+import re
 import numpy as np
 from SU2.util.bunch import Bunch
 from record import Record
@@ -28,7 +29,18 @@ def copy_mesh(config,i):
     src = '../' + previous_directory + mesh_filename
     dst = mesh_filename
   shutil.copy(src,dst)
-  
+
+def link_mesh(config):
+  '''Links the mesh to the current working directory.'''
+
+  mesh_filename = config.MESH_FILENAME
+  src = '../' + mesh_filename
+  #base, ext = os.path.splitext(mesh_filename)
+  #dst = base + '_original' + ext
+  dst = mesh_filename
+  os.symlink(src,dst)
+  #config.MESH_FILENAME = dst
+
 def run(**SU2_params):
   '''Runs the problem '''
   
@@ -39,9 +51,11 @@ def run(**SU2_params):
   i = SU2_params['eval_id']
 
   #copy_mesh(config,i)
+  link_mesh(config) 
     
   # Create a record to keep track of the simulations
-  record_name = 'record.json'
+  #record_name = 'record.json'
+  record_name = '../record.json' # because running with folders do similar to config
   if os.path.isfile(record_name):
     print 'Loading record of simulations'
     record = Record(record_name)
@@ -108,13 +122,26 @@ def deform_mesh(config,x):
   
   config.unpack_dvs(x)
   folder_name = 'deform'
-  setup_run(folder_name,config)
+  make_folder(folder_name,config)
+  #link_mesh(config)
+  # link_mesh from 2 levels back, prevents overwritting
+  mesh_filename = config.MESH_FILENAME
+  src = '../../' + mesh_filename
+  #base, ext = os.path.splitext(mesh_filename)
+  #dst = base + '_original' + ext
+  dst = mesh_filename
+  os.symlink(src,dst)
+  
+#base, ext = os.path.splitext(mesh_filename)
+  #dst = base + '_original' + ext
   log = 'log_Deform.out'
   with SU2.io.redirect_output(log):
     SU2.run.DEF(config)
   mesh_filename = config.MESH_FILENAME
   mesh_filename_deformed = config.MESH_OUT_FILENAME
   src = mesh_filename_deformed
+  #base, ext = os.path.splitext(mesh_filename)
+  #dst = '../' + base + '_deformed' + ext
   dst = '../' + mesh_filename
   shutil.move(src,dst)
   os.chdir('..')
@@ -175,9 +202,11 @@ def func(record,config,x=[],u={}):
   #prerun Move files around and stuff
   folder_name = 'direct'
   config.MATH_PROBLEM = 'DIRECT'
-  setup_run(folder_name,config)
-  
-  SU2.run.CFD(config)
+  make_folder(folder_name,config)
+  link_mesh(config)
+  log = 'log_Direct.out'
+  with SU2.io.redirect_output(log):
+    SU2.run.CFD(config)
   # Aqui en record things that I want to keep track off.
   # Read the history file, read some other stuff.
   history = SU2.io.read_history('history.dat') # whatever the config_name of the history file is.
@@ -188,17 +217,17 @@ def func(record,config,x=[],u={}):
   
   return f
   
-def setup_run(folder,config):
+def make_folder(folder,config):
   # check, make folder
   if not os.path.exists(folder):
     os.makedirs(folder)
   # change directory
   os.chdir(folder)
-  # copy the config_file to the directory
-  mesh_filename = config.MESH_FILENAME
-  src = '../' + mesh_filename
-  dst = mesh_filename
-  os.symlink(src,dst)
+#  # link the mesh file to the directory
+#  mesh_filename = config.MESH_FILENAME
+#  src = '../' + mesh_filename
+#  dst = mesh_filename
+#  os.symlink(src,dst)
   
 def grad(record,config,x=[],u={}):
   # Check if it is a design problem
@@ -221,13 +250,21 @@ def grad(record,config,x=[],u={}):
   #prerun Move files around and stuff
   folder_name = 'adjoint'
   config.MATH_PROBLEM = 'ADJOINT'
-  setup_run(folder_name,config)
-  
+  make_folder(folder_name,config)
+  link_mesh(config)
+
   src = '../direct/' + config.RESTART_FLOW_FILENAME
   dst = config.SOLUTION_FLOW_FILENAME
   shutil.copy(src,dst)
-  SU2.run.CFD(config)
-  SU2.run.DOT(config)
+  log = 'log_Adjoint.out'
+  with SU2.io.redirect_output(log):
+    SU2.run.CFD(config)
+# Doing the unpack here with the step size, I can keep my original logic of when to deform. But still modify to include the already deform part.
+  step = [0.001]*len(x)
+  config.unpack_dvs(step)
+  log = 'log_GradientProjection.out'
+  with SU2.io.redirect_output(log):
+    SU2.run.DOT(config)
   
   f = open('of_grad.dat','r')
   f.readline()

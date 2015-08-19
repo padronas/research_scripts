@@ -38,8 +38,11 @@ class Record(Bunch):
    
     # Don't deform, if design vector is zero or same as previous simulation.
     if np.linalg.norm(x) < 1e-15:
-      return False
+      self.simulations[current_simulation].deformed = True
+      return True
+      #return False
     elif i == 1: # Deform if it is the first iteration
+      self.simulations[current_simulation].deformed = True
       return True
     else:
       simulation = 'simulation' + str(i-1)

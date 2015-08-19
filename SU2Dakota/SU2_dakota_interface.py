@@ -31,10 +31,10 @@ def main():
   ### Config file options ### 
   config_filename = 'inv_NACA0012_opt.cfg'
   # Create a config container
-  #config_filename = '../' + config_filename # Because running dakota with folders
+  config_filename = '../' + config_filename # Because running dakota with folders
   config = SU2.io.Config(config_filename)
   # Number of processors to run simulation on
-  config.NUMBER_PART = 4
+  config.NUMBER_PART = 16
   
   #move mesh file to this directory
   # Optimization objective
@@ -118,6 +118,15 @@ def main():
           functions = resultsdict['fns']
           outfile.write(str(functions[func_ind]) + ' f' + str(func_ind) + '\n')
 
+  # write gradients
+  for func_ind in range(0, num_fns):
+    if (active_set_vector[func_ind] & 2):
+      grad = resultsdict['fnGrads'][func_ind]
+      outfile.write('[ ')
+      for deriv in grad:
+        outfile.write(str(deriv) + ' ')
+      outfile.write(']\n') 
+  
   outfile.close()
 
   # move the temporary results file to the one DAKOTA expects
