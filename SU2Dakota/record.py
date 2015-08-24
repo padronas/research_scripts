@@ -23,26 +23,25 @@ class Record(Bunch):
       self.simulations = Bunch()
 
   def deform_needed(self,x):
-    '''Checks if deformation needed.'''
+    '''Checks if mesh deformation needed.'''
     
     i = self.nsimulations
     current_simulation = 'simulation' + str(i)
     
-    # Don't deform, if I already deformed for the current simulation.
+    # Don't deform, if I already deformed mesh for the current simulation.
     try:
-      if self.simulations[current_simulation].deformed == True:
-        print '\n estoy aqui'
+      if self.simulations[current_simulation].mesh_updated == True:
         return False
     except AttributeError:
       pass
    
     # Don't deform, if design vector is zero or same as previous simulation.
     if np.linalg.norm(x) < 1e-15:
-      self.simulations[current_simulation].deformed = True
-      return True
-      #return False
+      #self.simulations[current_simulation].mesh_updated = True
+      #return True
+      return False
     elif i == 1: # Deform if it is the first iteration
-      self.simulations[current_simulation].deformed = True
+      self.simulations[current_simulation].mesh_updated = True
       return True
     else:
       simulation = 'simulation' + str(i-1)
@@ -53,12 +52,9 @@ class Record(Bunch):
       if np.array_equal(x,x_old):
         return False
       else:
-        self.simulations[current_simulation].deformed = True
+        self.simulations[current_simulation].mesh_updated = True
         return True
       
       
 
   
-  
-
-

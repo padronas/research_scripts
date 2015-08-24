@@ -22,6 +22,10 @@ def main():
   paramsfile = sys.argv[1]
   paramsdict = parse_dakota_parameters_file(paramsfile)
 
+  # ----------------------
+  # Setting up application
+  # ----------------------
+  
   # -------------------------------
   # Convert and send to application
   # -------------------------------
@@ -36,14 +40,10 @@ def main():
   # Number of processors to run simulation on
   config.NUMBER_PART = 16
   
-  #move mesh file to this directory
   # Optimization objective
   #config.OPT_OBJECTIVE = 'DRAG' Maybe have this in the config file itself
-  # Think of these 2
-  #config.GRADIENT_METHOD = 'ADJOINT'
-  #config.CONSOLE = 'CONCISE' # creo if you want SU2 output to show up in files.
   
-  ### set a dictionary for passing to SU2 via Python kwargs ### 
+  ### Dictionary for passing to your application (SU2) ### 
   SU2_params = {}
   SU2_params['config'] = config
   SU2_params['uncertain_vars'] = {} # populate this below, problem specific
@@ -57,13 +57,13 @@ def main():
   active_set_vector = [ int(paramsdict['ASV_1:obj_fn']) ]
   SU2_params['asv'] = active_set_vector
   
-  # If you have uncertain variables, uncomment and modify as needed
+  # Specify uncertain variables, uncomment and modify as needed.
   nu_var = 0
   # the KEY has to be a valid SU2 configuration option
   # SU2_params['uncertain_vars'][KEY] = ...
   # SU2_params['uncertain_vars']['MACH_NUMBER'] = float(paramsdict['Mach'])
   
-  # If you have design variables, uncomment and modify as needed.
+  # Specify design variables, uncomment and modify as needed.
   nd_var = 38
   for i in range(1,nd_var+1):
     var = 'x' + str(i)
@@ -136,7 +136,7 @@ def main():
   
 
 def parse_dakota_parameters_file(paramsfilename):
-  '''Parse DAKOTA parameters file '''
+  '''Return parameters for application.'''
   
   # setup regular expressions for parameter/label matching
   e = r'-?(?:\d+\.?\d*|\.\d+)[eEdD](?:\+|-)?\d+'  # exponential notation
@@ -156,7 +156,7 @@ def parse_dakota_parameters_file(paramsfilename):
   for line in paramsfile:
       m = standard_regex.match(line)
       if m:
-          print m.group()
+          #print m.group()
           paramsdict[m.group(2)] = m.group(1)
 
   paramsfile.close()
