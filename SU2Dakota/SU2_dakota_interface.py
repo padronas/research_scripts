@@ -13,6 +13,7 @@ import sys
 import re
 import os
 import SU2
+import SU2Dakota.interface as interface
 
 def main():
   
@@ -20,7 +21,7 @@ def main():
   # Parse DAKOTA parameters file
   # ----------------------------
   paramsfile = sys.argv[1]
-  paramsdict = parse_dakota_parameters_file(paramsfile)
+  paramsdict = interface.parse_dakota_parameters_file(paramsfile)
 
   # ----------------------
   # Setting up application
@@ -43,7 +44,7 @@ def main():
   ### Dictionary for passing to your application (SU2) ### 
   eval_id = int(paramsdict['eval_id'])
   active_set_vector = [ int(paramsdict['ASV_1:obj_fn']) ]
-  active_set_vector.append(int(paramsdict['ASV_2:nln_ineq_con_1']) ] # maybe you don't have the one
+  active_set_vector.append(int(paramsdict['ASV_2:nln_ineq_con_1']) ) # maybe you don't have the one
   
   ### Modify the paramsdict names to match those of the params file ###
   
@@ -85,7 +86,7 @@ def main():
   # execute the SU2 analysis
   import SU2Dakota
   print "Running SU2..."
-  resultsdict = SU2Dakota.run(record_name,config,
+  resultsdict = interface.run(record_name,config,
                 eval_id,active_set_vector,design_vars,uncertain_vars)
   print "SU2 complete."
   print resultsdict
@@ -127,33 +128,7 @@ def main():
   #os.system('mv results.out.tmp ' + sys.argv[2])
   
 
-def parse_dakota_parameters_file(paramsfilename):
-  '''Return parameters for application.'''
-  
-  # setup regular expressions for parameter/label matching
-  e = r'-?(?:\d+\.?\d*|\.\d+)[eEdD](?:\+|-)?\d+'  # exponential notation
-  f = r'-?\d+\.\d*|-?\.\d+'                       # floating point
-  i = r'-?\d+'                                    # integer
-  value = e+'|'+f+'|'+i                           # numeric field
-  tag = r'\w+(?::\w+)*'                           # text tag field
 
-  # regular expression for standard parameters format
-  standard_regex = re.compile('^\s*('+value+')\s+('+tag+')$')
-
-  # open DAKOTA parameters file for reading
-  paramsfile = open(paramsfilename, 'r')
-
-  # extract the parameters from the file and store in a dictionary
-  paramsdict = {}
-  for line in paramsfile:
-      m = standard_regex.match(line)
-      if m:
-          #print m.group()
-          paramsdict[m.group(2)] = m.group(1)
-
-  paramsfile.close()
-  
-  return paramsdict
   
 
 
