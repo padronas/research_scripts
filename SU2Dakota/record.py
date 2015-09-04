@@ -50,6 +50,7 @@ class Record(Bunch):
         print 'ERROR: Design variables are not the same length'
         sys.exit()
       if np.array_equal(x,x_old):
+        self.simulations[current_simulation].copy_mesh = True
         return False
       else:
         self.simulations[current_simulation].mesh_updated = True
