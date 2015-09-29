@@ -2,7 +2,7 @@
 
 import SU2
 import os
-from .utils import update_config, setup, restart2solution, get_mesh
+from .utils import set_variables, setup, restart2solution, get_mesh
 
 def func(record,config,x,u):
 
@@ -41,7 +41,7 @@ def func(record,config,x,u):
 def grad(record,config,x,u):
 
   ### Pre-run ###
-  update_config(record,config,x,u)
+  set_variables(record,config,x,u)
   get_mesh(record,config)
   folder_name = 'adjoint'
   config.MATH_PROBLEM = 'ADJOINT'

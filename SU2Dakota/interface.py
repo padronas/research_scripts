@@ -24,9 +24,9 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
 
     Returns:
     returndict ({}): function, gradient, constrain values as specified in asv.
-      """
+    """
 
-  # Create a record to keep track of the simulations
+    # Create a record to keep track of the simulations
     record_name = '../' + record_name  # because running dakota with folders
     record = Record(record_name,config)
 
@@ -77,8 +77,8 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
 
     return returndict
 
-    def parse_dakota_parameters_file(paramsfilename):
-        """Return parameters for application."""
+def parse_dakota_parameters_file(paramsfilename):
+    """Return parameters for application."""
 
     # setup regular expressions for parameter/label matching
     e = r'-?(?:\d+\.?\d*|\.\d+)[eEdD](?:\+|-)?\d+'  # exponential notation
@@ -132,8 +132,8 @@ def write_dakota_results_file(
         if (active_set_vector[func_ind] & 2):
             grad = resultsdict['fnGrads'][func_ind]
             outfile.write('[ ')
-        for deriv in grad:
-            outfile.write(str(deriv) + ' ')
+            for deriv in grad:
+                outfile.write(str(deriv) + ' ')
             outfile.write(']\n')
 
     outfile.close()
@@ -146,17 +146,17 @@ def check_dakota_input(file):
         file1 = '../' + file
         f = open(file1, 'r')
         f.close()
-  except IOError: #Tell people to activate running with directories.
-    good = False
-    f = open(file,'r')
-    for line in f:
-      if 'work_directory' in line:
-        if line.split()[0][0] != '#':
-          good = True
-    f.close()
-    if not good:
-      message1 = 'Error: Need dakota keyword work_directory in ' + f.name +'\n'
-      message2 = '''Also include:
+    except IOError: #Tell people to activate running with directories.
+        good = False
+        f = open(file,'r')
+        for line in f:
+            if 'work_directory' in line:
+                if line.split()[0][0] != '#':
+                    good = True
+        f.close()
+        if not good:
+            message1 = 'Error: Need dakota keyword work_directory in ' + f.name +'\n'
+            message2 = '''Also include:
                     named = 'workdir'
                     directory_tag
                     directory_save
@@ -165,5 +165,5 @@ def check_dakota_input(file):
                     results_file = 'results.out'
                     file_tag
                     file_save'''
-      message = message1 + message2
-      sys.exit(message)
+            message = message1 + message2
+            sys.exit(message)
