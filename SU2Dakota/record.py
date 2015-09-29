@@ -26,6 +26,7 @@ class Record(Bunch):
         mesh_filename = config.MESH_FILENAME
         head, tail = os.path.split(os.getcwd())
         self.baseline_mesh = head + '/' + mesh_filename
+        self.current_mesh = self.baseline_mesh
 
   def deform_needed(self,x):
     '''Checks if mesh deformation needed.'''
@@ -50,8 +51,6 @@ class Record(Bunch):
             print 'ERROR: Design variables are not the same length'
             sys.exit()
         if np.array_equal(x,x_old):
-            #self.simulations[current_simulation].copy_mesh = True
-            # here set the record variable probably
             return False
         else:
             self.simulations[current_simulation].mesh_updated = True

@@ -2,13 +2,12 @@
 
 import SU2
 import os
-from .utils import set_variables, setup, restart2solution, get_mesh
+from .utils import set_variables, setup, restart2solution
 
 def func(record,config,x,u):
 
   ### Pre-run ###
-  set_variables(record,config,x,u) 
-  get_mesh(record,config)
+  set_variables(record,config,x,u)
   folder_name = 'direct'
   config.MATH_PROBLEM = 'DIRECT'
   setup(folder_name,record,config)
@@ -42,7 +41,6 @@ def grad(record,config,x,u):
 
   ### Pre-run ###
   set_variables(record,config,x,u)
-  get_mesh(record,config)
   folder_name = 'adjoint'
   config.MATH_PROBLEM = 'ADJOINT'
   setup(folder_name,record,config)

@@ -41,39 +41,10 @@ def setup_restart(folder_name,record,config):
     shutil.copy(src,dst)
     config.RESTART_SOL = 'YES'
 
-def get_mesh(record,config):
-
-  mesh_filename = config.MESH_FILENAME
-  if os.path.isfile(mesh_filename):
-    # Mesh is already in this simulation directory
-    # The mesh deformation in update_config() put it here.
-    pass
-  else: # Get mesh from the appropriate location
-    i = record.nsimulations
-    current_simulation = 'simulation' + str(i)
-    if i==1:
-      link_mesh(config)
-    else:
-      try:
-        if record.simulations[current_simulation].copy_mesh == True:
-          #link mesh from previous iteration, for OUU problems.
-          mesh_filename = config.MESH_FILENAME
-          previous_directory = get_previous_dir(i)
-          src = '../' + previous_directory + mesh_filename
-          dst = mesh_filename
-          #shutil.copy(src,dst)
-          try:
-            os.symlink(src,dst)
-          except OSError, e:
-            if e.errno == errno.EEXIST:
-              os.remove(dst)
-              os.symlink(src,dst)
-      except AttributeError:
-        link_mesh(config)
 
 def setup(folder_name,record,config):
   setup_folder(folder_name)
-  link_mesh(config)
+  link_mesh(record,config)
   setup_restart(folder_name,record,config)
   # provide the direct solution for the adjoint solver
   if config.MATH_PROBLEM == 'ADJOINT':
@@ -85,17 +56,12 @@ def setup(folder_name,record,config):
 
 
 
-def link_mesh(config):
+def link_mesh(record, config):
   '''Links the mesh to the current working directory from up a directory.'''
   mesh_filename = config.MESH_FILENAME
-  src = '../' + mesh_filename
+  src = record.current_mesh
   dst = mesh_filename
-  try:
-    os.symlink(src,dst)
-  except OSError, e:
-    if e.errno == errno.EEXIST:
-      os.remove(dst)
-      os.symlink(src,dst)
+  os.symlink(src,dst)
 
 def setup_folder(folder):
   """Make folder and move into it."""
@@ -105,7 +71,7 @@ def setup_folder(folder):
   # change directory
   os.chdir(folder)
 
-def set_variables(record,config,x,u):
+def set_variables(record, config, x, u):
   '''Set up problem with the correct design and uncertain variables.
 
   Modifies the config to have the desired design and uncertain variables
@@ -117,7 +83,7 @@ def set_variables(record,config,x,u):
   if x:
     # Check if mesh deformation needed for the current design vector.
     if record.deform_needed(x):
-      deform_mesh(config,x)
+      deform_mesh(record, config, x)
 
   # Check for uq problem
   if u:
@@ -156,15 +122,16 @@ def projection(config, step=1e-3):
 
 
 
-def deform_mesh(config,x):
+def deform_mesh(record, config, x):
   """Make a new mesh corresponding to design vector x."""
 
   config.unpack_dvs(x)
   folder_name = 'deform'
   setup_folder(folder_name)
+
   # link original (undeformed) mesh
   mesh_filename = config.MESH_FILENAME
-  src = '../../' + mesh_filename
+  src = record.baseline_mesh
   dst = mesh_filename
   os.symlink(src,dst)
 
@@ -175,11 +142,12 @@ def deform_mesh(config,x):
     SU2.run.DEF(config)
   print 'finished deforming mesh.'
 
-  # move updated mesh to correct location
-  mesh_filename = config.MESH_FILENAME
+  # updated the current mesh
   mesh_filename_deformed = config.MESH_OUT_FILENAME
   src = mesh_filename_deformed
-  dst = '../' + mesh_filename
+  dst = mesh_filename
   shutil.move(src,dst)
+  record.current_mesh = os.getcwd() + '/' + mesh_filename
+
   # return to the directory this function was called from
   os.chdir('..')
