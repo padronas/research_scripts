@@ -4,7 +4,7 @@ import shutil, os
 import re
 import SU2
 
-def get_previous_dir(i,j=1): 
+def get_previous_dir(i,j=1):
   """Return previous directory.
 
   Inputs: i (int) - the current simulation
@@ -42,10 +42,10 @@ def setup_restart(folder_name,record,config):
     config.RESTART_SOL = 'YES'
 
 def get_mesh(record,config):
-  
+
   mesh_filename = config.MESH_FILENAME
   if os.path.isfile(mesh_filename):
-    # Mesh is already in this simulation directory 
+    # Mesh is already in this simulation directory
     # The mesh deformation in update_config() put it here.
     pass
   else: # Get mesh from the appropriate location
@@ -82,7 +82,7 @@ def setup(folder_name,record,config):
     dst = config.SOLUTION_FLOW_FILENAME
     #shutil.copy(src,dst)
     os.symlink(src,dst)
-  
+
 
 
 def link_mesh(config):
@@ -105,9 +105,9 @@ def setup_folder(folder):
   # change directory
   os.chdir(folder)
 
-def update_config(record,config,x,u):
+def set_variables(record,config,x,u):
   '''Set up problem with the correct design and uncertain variables.
-  
+
   Modifies the config to have the desired design and uncertain variables
   values. If necessary it will perform a mesh deformation to account
   for the updated design variables.
@@ -118,15 +118,15 @@ def update_config(record,config,x,u):
     # Check if mesh deformation needed for the current design vector.
     if record.deform_needed(x):
       deform_mesh(config,x)
-    
+
   # Check for uq problem
   if u:
     for key in u.keys():
       config[key] = u[key]
-  
+
 def restart2solution(config):
   '''Moves restart file to solution file.'''
-  
+
   if config.MATH_PROBLEM == 'DIRECT':
     restart = config.RESTART_FLOW_FILENAME
     solution = config.SOLUTION_FLOW_FILENAME
@@ -145,7 +145,7 @@ def restart2solution(config):
 
 
 def projection(config, step=1e-3):
-  
+
   # files out
   objective      = config['OBJECTIVE_FUNCTION']
   grad_filename  = config['GRAD_OBJFUNC_FILENAME']
@@ -153,12 +153,12 @@ def projection(config, step=1e-3):
   plot_extension = SU2.io.get_extension(output_format)
   adj_suffix     = SU2.io.get_adjointSuffix(objective)
   grad_plotname  = os.path.splitext(grad_filename)[0] + '_' + adj_suffix + plot_extension
-  
+
 
 
 def deform_mesh(config,x):
   """Make a new mesh corresponding to design vector x."""
-  
+
   config.unpack_dvs(x)
   folder_name = 'deform'
   setup_folder(folder_name)
@@ -167,14 +167,14 @@ def deform_mesh(config,x):
   src = '../../' + mesh_filename
   dst = mesh_filename
   os.symlink(src,dst)
- 
+
   ### Run ###
   print 'deforming mesh ...'
   log = 'log_Deform.out'
   with SU2.io.redirect_output(log):
     SU2.run.DEF(config)
   print 'finished deforming mesh.'
-  
+
   # move updated mesh to correct location
   mesh_filename = config.MESH_FILENAME
   mesh_filename_deformed = config.MESH_OUT_FILENAME
@@ -183,6 +183,3 @@ def deform_mesh(config,x):
   shutil.move(src,dst)
   # return to the directory this function was called from
   os.chdir('..')
-
-
-
