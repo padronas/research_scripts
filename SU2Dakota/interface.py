@@ -42,35 +42,37 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
 
     # Run the simulation
     returndict = {}
-    objective = config.OPT_OBJECTIVE.keys()[0]
 
+    # Objective
     if (asv[0] & 1):  # function
+        objective = config.OPT_OBJECTIVE.keys()[0]
         config.OBJECTIVE_FUNCTION = objective
         f = func(record, config, x, u)
-        returndict['fns'] = [f]  # return list for now
+        returndict['fns'] = [f]
         record.simulations[simulation].function = f
 
     if (asv[0] & 2):  # gradient function
+        objective = config.OPT_OBJECTIVE.keys()[0]
         config.OBJECTIVE_FUNCTION = objective
         g = grad(record, config, x, u)
-        returndict['fnGrads'] = [g]  # return list for now
+        returndict['fnGrads'] = [g]
         record.simulations[simulation].gradient = g
 
-    # Can have this in a try statement if it is an unconstrained problem.
-    # if (asv[1] & 1): # constrain
-    # print 'Aloha'
-    # sys.exit()
-    # pass
-    #      f = cons(record,config,x,u)
-    #      returndict['fns'] = [f] # return list for now
-    #      record.simulations[simulation].function = f
+    # Constraints
+    for i in range(1,len(asv)):
+        if (asv[i] & 1): # constraint
+            constraint = config.OPT_CONSTRAINT['INEQUALITY'].keys()[i-1]
+            config.OBJECTIVE_FUNCTION = constraint
+            f = func(record, config, x, u)
+            returndict['fns'].append(f)
+            record.simulations[simulation].constraint = f
 
-#  if (asv[1] & 2): # gradient constrain
-#      g = cons_grad(record,config,x,u)
-#      returndict['fnGrads'] = [g] # return list for now
-#      record.simulations[simulation].gradient = g
-
-    # To add another constrain asv[2] and call the right the function.
+        if (asv[1] & 2): # gradient constraint
+            constraint = config.OPT_CONSTRAINT['INEQUALITY'].keys()[i-1]
+            config.OBJECTIVE_FUNCTION = constraint
+            g = cons_grad(record,config,x,u)
+            returndict['fnGrads'].append(g)
+            record.simulations[simulation].constraint_gradient = g
 
     # Write out the record of simulations
     file = open(record_name, 'w')
@@ -114,7 +116,7 @@ def write_dakota_results_file(
         resultfilename, resultsdict, paramsdict, active_set_vector):
     """Write results of application for Dakota."""
 
-# Make sure number of functions is as expected.
+    # Make sure number of functions is as expected.
     num_fns = 0
     if ('functions' in paramsdict):
         num_fns = int(paramsdict['functions'])

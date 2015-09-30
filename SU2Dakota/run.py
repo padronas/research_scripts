@@ -71,6 +71,7 @@ def grad(record, config, x, u):
     g = []
     for line in f:
         g.append(float(line))
+
     # return to the directory this function was called from
     os.chdir('..')
 
