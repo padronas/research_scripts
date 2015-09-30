@@ -42,14 +42,16 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
 
     # Run the simulation
     returndict = {}
+    objective = config.OPT_OBJECTIVE.keys()[0]
 
     if (asv[0] & 1):  # function
-        config.OBJECTIVE_FUNCTION = config.OPT_OBJECTIVE
+        config.OBJECTIVE_FUNCTION = objective
         f = func(record, config, x, u)
         returndict['fns'] = [f]  # return list for now
         record.simulations[simulation].function = f
 
     if (asv[0] & 2):  # gradient function
+        config.OBJECTIVE_FUNCTION = objective
         g = grad(record, config, x, u)
         returndict['fnGrads'] = [g]  # return list for now
         record.simulations[simulation].gradient = g

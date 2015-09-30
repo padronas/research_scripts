@@ -42,6 +42,10 @@ def grad(record, config, x, u):
     ### Pre-run ###
     set_variables(record, config, x, u)
     folder_name = 'adjoint'
+    # add suffix to folder
+    func_name = config.OBJECTIVE_FUNCTION
+    suffix = SU2.io.get_adjointSuffix(func_name)
+    folder_name = SU2.io.add_suffix(folder_name, suffix)
     config.MATH_PROBLEM = 'ADJOINT'
     setup(folder_name, record, config)
 
