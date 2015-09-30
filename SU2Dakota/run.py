@@ -2,72 +2,72 @@
 
 import SU2
 import os
-from .utils import set_variables, setup, restart2solution
+from .utils import set_variables, setup, restart2solution, postprocess, check_for_function
 
-def func(record,config,x,u):
 
-  ### Pre-run ###
-  set_variables(record,config,x,u)
-  folder_name = 'direct'
-  config.MATH_PROBLEM = 'DIRECT'
-  setup(folder_name,record,config)
+def func(record, config, x, u):
 
-  ### Run ###
-  print 'running (the function) direct problem ...'
-  log = 'log_Direct.out'
-  with SU2.io.redirect_output(log):
-    # Run the CFD
-    SU2.run.CFD(config)
-    # Run the Solution Exporting Code
-    restart2solution(config)
-    SU2.run.SOL(config)
-  print 'finished running direct problem.'
+    f = check_for_function(record, config)
+    if f is not None:
+        return f
 
-  ### Post-run ###
-  # process outputs
-  # Aqui en record things that I want to keep track off.
-  # Read the history file, read some other stuff.
-  history_filename = config.CONV_FILENAME + '.dat'
-  # The ending assumes we are running with Tecplot output
-  history = SU2.io.read_history(history_filename)
-  f = history['DRAG'][-1]
+    ### Pre-run ###
+    set_variables(record, config, x, u)
+    folder_name = 'direct'
+    config.MATH_PROBLEM = 'DIRECT'
+    setup(folder_name, record, config)
 
-  # return to the directory this function was called from
-  os.chdir('..')
+    ### Run ###
+    print 'running (the function) direct problem ...'
+    log = 'log_Direct.out'
+    with SU2.io.redirect_output(log):
+        # Run the CFD
+        SU2.run.CFD(config)
+        # Run the Solution Exporting Code
+        restart2solution(config)
+        SU2.run.SOL(config)
+    print 'finished running direct problem.'
 
-  return f
+    ### Post-run ###
+    f = postprocess(record, config)
 
-def grad(record,config,x,u):
+    # return to the directory this function was called from
+    os.chdir('..')
 
-  ### Pre-run ###
-  set_variables(record,config,x,u)
-  folder_name = 'adjoint'
-  config.MATH_PROBLEM = 'ADJOINT'
-  setup(folder_name,record,config)
+    return f
 
-  ### Run ###
-  print 'running (the gradient) adjoint problem ...'
-  log = 'log_Adjoint.out'
-  with SU2.io.redirect_output(log):
-    # Run the CFD
-    SU2.run.CFD(config)
-    # Run the Solution Exporting Code
-    restart2solution(config)
-    SU2.run.SOL(config)
-    # Run the Gradient Projection Code
-    step = [0.001]*len(x)
-    config.unpack_dvs(step)
-    SU2.run.DOT(config)
-  print 'finished running the adjoint problem.'
 
-  ### Post-run ###
-  # process outputs
-  f = open('of_grad.dat','r')
-  f.readline()
-  g = []
-  for line in f:
-    g.append(float(line))
-  # return to the directory this function was called from
-  os.chdir('..')
+def grad(record, config, x, u):
 
-  return g
+    ### Pre-run ###
+    set_variables(record, config, x, u)
+    folder_name = 'adjoint'
+    config.MATH_PROBLEM = 'ADJOINT'
+    setup(folder_name, record, config)
+
+    ### Run ###
+    print 'running (the gradient) adjoint problem ...'
+    log = 'log_Adjoint.out'
+    with SU2.io.redirect_output(log):
+        # Run the CFD
+        SU2.run.CFD(config)
+        # Run the Solution Exporting Code
+        restart2solution(config)
+        SU2.run.SOL(config)
+        # Run the Gradient Projection Code
+        step = [0.001] * len(x)
+        config.unpack_dvs(step)
+        SU2.run.DOT(config)
+    print 'finished running the adjoint problem.'
+
+    ### Post-run ###
+    # process outputs
+    f = open('of_grad.dat', 'r')
+    f.readline()
+    g = []
+    for line in f:
+        g.append(float(line))
+    # return to the directory this function was called from
+    os.chdir('..')
+
+    return g
