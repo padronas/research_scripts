@@ -39,6 +39,7 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
     record.simulations[simulation].uncertain_vars = u
     record.simulations[simulation].directory = os.path.abspath('.')
     record.simulations[simulation].mesh_updated = False
+    record.simulations[simulation].converged = {}
 
     # Run the simulation
     returndict = {}
@@ -70,7 +71,7 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
         if (asv[1] & 2): # gradient constraint
             constraint = config.OPT_CONSTRAINT['INEQUALITY'].keys()[i-1]
             config.OBJECTIVE_FUNCTION = constraint
-            g = cons_grad(record,config,x,u)
+            g = grad(record,config,x,u)
             returndict['fnGrads'].append(g)
             record.simulations[simulation].constraint_gradient = g
 
