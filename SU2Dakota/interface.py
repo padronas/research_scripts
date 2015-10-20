@@ -5,6 +5,7 @@ import json
 import re
 from SU2.util.bunch import Bunch
 from .record import Record
+from .utils import set_variables
 from .run import *
 
 
@@ -30,19 +31,20 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
     record_name = '../' + record_name  # because running dakota with folders
     record = Record(record_name, config)
 
-    # Number of simulations in record
+    # Update the number of simulations in record
     record.nsimulations = eval_id
     # Initialize the simulation in the record simulations
     simulation = 'simulation' + str(eval_id)
     record.simulations[simulation] = Bunch()
     record.simulations[simulation].design_vars = x
     record.simulations[simulation].uncertain_vars = u
-    record.simulations[simulation].directory = os.path.abspath('.')
-    record.simulations[simulation].mesh_updated = False
+    record.simulations[simulation].directory = os.getcwd()
     record.simulations[simulation].converged = {}
 
     # Run the simulation
     returndict = {}
+
+    set_variables(record,config,x,u)
 
     # Objective
     if (asv[0] & 1):  # function

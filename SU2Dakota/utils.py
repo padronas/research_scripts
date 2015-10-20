@@ -55,7 +55,6 @@ def setup(folder_name, record, config):
         #src = '../direct/' + config.RESTART_FLOW_FILENAME
         src = '../direct/' + config.SOLUTION_FLOW_FILENAME
         dst = config.SOLUTION_FLOW_FILENAME
-        # shutil.copy(src,dst)
         os.symlink(src, dst)
 
 
@@ -87,7 +86,7 @@ def set_variables(record, config, x, u):
     # Check for design problem
     if x:
         # Check if mesh deformation needed for the current design vector.
-        if record.deform_needed(x):
+        if deform_needed(record,x):
             deform_mesh(record, config, x)
 
     # Check for uq problem
@@ -116,17 +115,21 @@ def restart2solution(config):
         raise Exception('unknown math problem')
 
 
-def projection(config, step=1e-3):
+def deform_needed(record, x):
+    """Return bool specifying if mesh deformation needed."""
 
-    # files out
-    objective = config['OBJECTIVE_FUNCTION']
-    grad_filename = config['GRAD_OBJFUNC_FILENAME']
-    output_format = config['OUTPUT_FORMAT']
-    plot_extension = SU2.io.get_extension(output_format)
-    adj_suffix = SU2.io.get_adjointSuffix(objective)
-    grad_plotname = os.path.splitext(grad_filename)[
-        0] + '_' + adj_suffix + plot_extension
+    i = record.nsimulations
+    current_simulation = 'simulation' + str(i)
+    if i == 1:
+        record.old_design_vector = x
 
+    # Don't deform, if design vector is zero or same as previous simulation.
+    if np.linalg.norm(x) < 1e-15:
+        return False
+    if x == record.old_design_vector:
+        return False
+
+    return True
 
 def deform_mesh(record, config, x):
     """Make a new mesh corresponding to design vector x."""
@@ -170,13 +173,11 @@ def postprocess(record, config):
     for key in history.keys():
         if key in kys:
             hist[key] = history[key][-1]
-    i = record.nsimulations
-    simulation = 'simulation' + str(i)
+    simulation = get_current_simulation(record)
     # record the history of the current simulation
     record.simulations[simulation].history = hist
     # The quantity of interest the objective or constrain
     f = hist[config.OBJECTIVE_FUNCTION]
-
 
     # Optionally also record the airfoil coordinates
     surface_filename = config.SURFACE_FLOW_FILENAME + '.csv'
@@ -194,8 +195,7 @@ def check_for_function(record, config):
     """Return value if already computed"""
 
     # If you ran the direct problem you should also have the constrain value.
-    i = record.nsimulations
-    simulation = 'simulation' + str(i)
+    simulation = get_current_simulation(record)
     try:
         hist = record.simulations[simulation].history
         f = hist[config.OBJECTIVE_FUNCTION]
@@ -210,9 +210,8 @@ def check_convergence(record, config, folder_name):
     # Read history file, the ending assumes we are running with Tecplot output
     history_filename = config.CONV_FILENAME + '.dat'
     history = SU2.io.read_history(history_filename)
-    
-    i = record.nsimulations
-    simulation = 'simulation' + str(i)
+
+    simulation = get_current_simulation(record)
 
     # Rough check to see if solution is converged
     if config.EXT_ITER == len(history['ITERATION']):
@@ -220,8 +219,7 @@ def check_convergence(record, config, folder_name):
     else:
         record.simulations[simulation].converged[folder_name] = True
 
-
-
-
-
-
+def get_current_simulation(record):
+    """Return the current simulation (string)"""
+    i = record.nsimulations
+    return 'simulation' + str(i)

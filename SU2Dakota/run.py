@@ -2,7 +2,7 @@
 
 import SU2
 import os
-from .utils import set_variables, setup, restart2solution, postprocess, check_for_function, check_convergence
+from .utils import setup, restart2solution, postprocess, check_for_function, check_convergence
 
 
 def func(record, config, x, u):
@@ -12,7 +12,6 @@ def func(record, config, x, u):
         return f
 
     ### Pre-run ###
-    set_variables(record, config, x, u)
     folder_name = 'direct'
     config.MATH_PROBLEM = 'DIRECT'
     setup(folder_name, record, config)
@@ -41,7 +40,6 @@ def func(record, config, x, u):
 def grad(record, config, x, u):
 
     ### Pre-run ###
-    set_variables(record, config, x, u)
     folder_name = 'adjoint'
     # add suffix to folder
     func_name = config.OBJECTIVE_FUNCTION
@@ -51,7 +49,7 @@ def grad(record, config, x, u):
     setup(folder_name, record, config)
 
     ### Run ###
-    print 'running (the gradient) adjoint problem ...'
+    print 'running (the gradient) ' + folder_name + ' problem ...'
     log = 'log_Adjoint.out'
     with SU2.io.redirect_output(log):
         # Run the CFD
@@ -63,7 +61,7 @@ def grad(record, config, x, u):
         step = [0.001] * len(x)
         config.unpack_dvs(step)
         SU2.run.DOT(config)
-    print 'finished running the adjoint problem.'
+    print 'finished running the ' + folder_name + ' problem.'
 
     ### Post-run ###
     # process outputs
