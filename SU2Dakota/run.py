@@ -2,7 +2,7 @@
 
 import SU2
 import os
-from .utils import setup, restart2solution, postprocess, check_for_function, check_convergence
+from .utils import setup, restart2solution, postprocess, postprocess_gradient, check_for_function, check_convergence, deform_needed, deform_mesh
 
 
 def func(record, config, x, u):
@@ -46,6 +46,8 @@ def grad(record, config, x, u):
     suffix = SU2.io.get_adjointSuffix(func_name)
     folder_name = SU2.io.add_suffix(folder_name, suffix)
     config.MATH_PROBLEM = 'CONTINUOUS_ADJOINT'
+    # Optionally set a different convergence for the adjoint problem
+    #config.RESIDUAL_REDUCTION = 3
     setup(folder_name, record, config)
 
     ### Run ###
@@ -64,15 +66,30 @@ def grad(record, config, x, u):
     print 'finished running the ' + folder_name + ' problem.'
 
     ### Post-run ###
-    # process outputs
-    f = open('of_grad.dat', 'r')
-    f.readline()
-    g = []
-    for line in f:
-        g.append(float(line))
+    gradient_file = 'of_grad.dat'
+    g = postprocess_gradient(gradient_file)
     check_convergence(record,config,folder_name)
 
     # return to the directory this function was called from
     os.chdir('..')
 
     return g
+
+def set_variables(record, config, x, u):
+    '''Set up problem with the correct design and uncertain variables.
+
+    Modifies the config to have the desired design and uncertain variables
+    values. If necessary it will perform a mesh deformation to account
+    for the updated design variables.
+    '''
+
+    # Check for design problem
+    if x:
+        # Check if mesh deformation needed for the current design vector.
+        if deform_needed(record,x):
+            deform_mesh(record, config, x)
+
+    # Check for uq problem
+    if u:
+        for key in u.keys():
+            config[key] = u[key]

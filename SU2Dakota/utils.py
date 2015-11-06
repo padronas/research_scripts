@@ -3,9 +3,9 @@
 import shutil
 import os
 import re
-import SU2
+import numpy as np
 import pandas as pd
-
+import SU2
 
 def get_previous_dir(i, j=1):
     """Return previous directory.
@@ -75,26 +75,6 @@ def setup_folder(folder):
     os.chdir(folder)
 
 
-def set_variables(record, config, x, u):
-    '''Set up problem with the correct design and uncertain variables.
-
-    Modifies the config to have the desired design and uncertain variables
-    values. If necessary it will perform a mesh deformation to account
-    for the updated design variables.
-    '''
-
-    # Check for design problem
-    if x:
-        # Check if mesh deformation needed for the current design vector.
-        if deform_needed(record,x):
-            deform_mesh(record, config, x)
-
-    # Check for uq problem
-    if u:
-        for key in u.keys():
-            config[key] = u[key]
-
-
 def restart2solution(config):
     '''Moves restart file to solution file.'''
 
@@ -131,6 +111,7 @@ def deform_needed(record, x):
 
     return True
 
+
 def deform_mesh(record, config, x):
     """Make a new mesh corresponding to design vector x."""
 
@@ -157,6 +138,7 @@ def deform_mesh(record, config, x):
     dst = mesh_filename
     shutil.move(src, dst)
     record.current_mesh = os.getcwd() + '/' + mesh_filename
+    record.old_design_vector = x
 
     # return to the directory this function was called from
     os.chdir('..')
@@ -189,6 +171,11 @@ def postprocess(record, config):
     record.simulations[simulation].airfoil_coordinates = coords
 
     return f
+
+
+def postprocess_gradient(filename):
+    g = np.squeeze(pd.read_csv(filename).values)
+    return g.tolist()
 
 
 def check_for_function(record, config):

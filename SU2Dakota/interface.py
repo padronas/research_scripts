@@ -5,7 +5,6 @@ import json
 import re
 from SU2.util.bunch import Bunch
 from .record import Record
-from .utils import set_variables
 from .run import *
 
 
@@ -38,7 +37,6 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
     record.simulations[simulation] = Bunch()
     record.simulations[simulation].design_vars = x
     record.simulations[simulation].uncertain_vars = u
-    record.simulations[simulation].directory = os.getcwd()
     record.simulations[simulation].converged = {}
 
     # Run the simulation
