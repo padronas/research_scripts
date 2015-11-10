@@ -47,7 +47,8 @@ def grad(record, config, x, u):
     folder_name = SU2.io.add_suffix(folder_name, suffix)
     config.MATH_PROBLEM = 'CONTINUOUS_ADJOINT'
     # Optionally set a different convergence for the adjoint problem
-    #config.RESIDUAL_REDUCTION = 3
+    if 'adjoint_convergence' in record:
+        config.RESIDUAL_REDUCTION = record.adjoint_convergence
     setup(folder_name, record, config)
 
     ### Run ###

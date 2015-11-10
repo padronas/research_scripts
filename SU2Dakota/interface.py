@@ -1,20 +1,17 @@
 """Module provides interface between SU2 and Dakota"""
-import os
 import sys
 import json
 import re
 from SU2.util.bunch import Bunch
-from .record import Record
 from .run import *
 
 
-def run(record_name, config, eval_id, asv, x=[], u={}):
+def run(record, config, asv, x=[], u={}):
     """Run SU2. Return values specified in asv.
 
     Args:
-    record_name (str): Filename of the record of simulations. JSON file.
+    record (Record): An object to keep track of the simulations.
     config (config): A SU2 config class.
-    eval_id (int): The evaluation number.
     asv ([int]): The active set vector, indicates desired simulator outputs.
                  For more information see Active Set Vector subsection in
                  Dakota user's manual.
@@ -26,14 +23,8 @@ def run(record_name, config, eval_id, asv, x=[], u={}):
     returndict ({}): function, gradient, constrain values as specified in asv.
     """
 
-    # Create a record to keep track of the simulations
-    record_name = '../' + record_name  # because running dakota with folders
-    record = Record(record_name, config)
-
-    # Update the number of simulations in record
-    record.nsimulations = eval_id
     # Initialize the simulation in the record simulations
-    simulation = 'simulation' + str(eval_id)
+    simulation = 'simulation' + str(record.nsimulations)
     record.simulations[simulation] = Bunch()
     record.simulations[simulation].design_vars = x
     record.simulations[simulation].uncertain_vars = u
